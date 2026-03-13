@@ -1,6 +1,6 @@
 repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.15.5
+    rev: v0.15.6
     hooks:
       - id: ruff
         args: [--fix, --exit-non-zero-on-fix, src/]
@@ -13,8 +13,8 @@ repos:
     rev: v1.19.1
     hooks:
       - id: mypy
-        args: [--strict, --ignore-missing-imports, src]
-        additional_dependencies: []
+        args: [--config-file=pyproject.toml]
+        additional_dependencies: [pytest>=9.0.0]
         types: [python]
 
   - repo: local
