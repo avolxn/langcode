@@ -1,8 +1,6 @@
 """Global configuration paths and settings."""
 
-import os
 from pathlib import Path
-
 
 APP = "langcode"
 
@@ -13,7 +11,7 @@ class _GlobalPath:
     @property
     def home(self) -> str:
         """Home directory (with test override support)."""
-        return os.environ.get("LANGCODE_TEST_HOME", str(Path.home()))
+        return str(Path.home())
 
     @property
     def data(self) -> str:
@@ -57,5 +55,4 @@ class Global:
     Path = _GlobalPath()
 
 
-# Ensure directories exist on import
 Global.Path.ensure_dirs()

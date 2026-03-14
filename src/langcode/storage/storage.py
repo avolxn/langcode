@@ -6,6 +6,7 @@ from typing import TypeVar
 
 import anyio
 
+from langcode.util.error import NamedError
 from langcode.util.filesystem import Filesystem
 from langcode.util.glob import Glob
 from langcode.util.lock import Lock
@@ -16,16 +17,14 @@ T = TypeVar("T")
 log = Log.create(service="storage")
 
 
-class NotFoundError(Exception):
-    """Resource not found in storage.
-
-    Attributes:
-        message: Error message describing what was not found
-    """
+class NotFoundError(NamedError):
+    """Resource not found in storage."""
 
     def __init__(self, message: str):
-        self.message = message
-        super().__init__(message)
+        super().__init__(
+            name="StorageNotFoundError",
+            data={"message": message},
+        )
 
 
 class Storage:

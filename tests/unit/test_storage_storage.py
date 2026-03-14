@@ -143,7 +143,7 @@ class TestStorage:
     async def test_not_found_error(self):
         """Test NotFoundError exception."""
         error = NotFoundError("test message")
-        assert error.message == "test message"
+        assert error.data["message"] == "test message"
         assert str(error) == "test message"
 
 

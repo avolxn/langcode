@@ -4,10 +4,10 @@ from typing import Any
 
 import anyio
 
-from langcode.config.paths import ConfigPaths
-from langcode.config.tui_schema import TuiInfo
 from langcode.config.flag import Flag
 from langcode.config.globals import Global
+from langcode.config.paths import ConfigPaths
+from langcode.config.tui_schema import TuiInfo
 from langcode.util.log import Log
 
 log = Log.create(service="tui.config")
