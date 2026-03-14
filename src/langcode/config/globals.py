@@ -8,7 +8,7 @@ APP = "langcode"
 
 
 class _GlobalPath:
-    """Global paths following XDG Base Directory specification."""
+    """Global paths for LangCode."""
 
     @property
     def home(self) -> str:
@@ -18,8 +18,7 @@ class _GlobalPath:
     @property
     def data(self) -> str:
         """Data directory."""
-        xdg_data = os.environ.get("XDG_DATA_HOME", str(Path.home() / ".local" / "share"))
-        return str(Path(xdg_data) / APP)
+        return str(Path(self.home) / f".{APP}")
 
     @property
     def bin(self) -> str:
@@ -34,20 +33,17 @@ class _GlobalPath:
     @property
     def cache(self) -> str:
         """Cache directory."""
-        xdg_cache = os.environ.get("XDG_CACHE_HOME", str(Path.home() / ".cache"))
-        return str(Path(xdg_cache) / APP)
+        return str(Path(self.data) / "cache")
 
     @property
     def config(self) -> str:
         """Config directory."""
-        xdg_config = os.environ.get("XDG_CONFIG_HOME", str(Path.home() / ".config"))
-        return str(Path(xdg_config) / APP)
+        return str(Path(self.data) / "config")
 
     @property
     def state(self) -> str:
         """State directory."""
-        xdg_state = os.environ.get("XDG_STATE_HOME", str(Path.home() / ".local" / "state"))
-        return str(Path(xdg_state) / APP)
+        return str(Path(self.data) / "state")
 
     def ensure_dirs(self) -> None:
         """Ensure all directories exist."""
