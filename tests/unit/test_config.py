@@ -70,9 +70,8 @@ class TestConfigPaths:
     def test_file_in_directory(self):
         """Test file path generation."""
         files = ConfigPaths.file_in_directory("/test/dir", "config")
-        assert len(files) == 2
-        assert files[0] == "/test/dir/config.jsonc"
-        assert files[1] == "/test/dir/config.json"
+        assert len(files) == 1
+        assert files[0] == "/test/dir/config.json"
 
     @pytest.mark.asyncio
     async def test_read_file_missing(self):
@@ -108,20 +107,6 @@ class TestConfigPaths:
         """Test parsing valid JSON text."""
         text = '{"key": "value", "number": 42}'
         result = await ConfigPaths.parse_text(text, "/test/config.json")
-        assert result["key"] == "value"
-        assert result["number"] == 42
-
-    @pytest.mark.asyncio
-    async def test_parse_text_with_comments(self):
-        """Test parsing JSONC with comments."""
-        text = """{
-  // This is a comment
-  "key": "value",
-  /* Multi-line
-     comment */
-  "number": 42
-}"""
-        result = await ConfigPaths.parse_text(text, "/test/config.jsonc")
         assert result["key"] == "value"
         assert result["number"] == 42
 

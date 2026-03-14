@@ -109,7 +109,7 @@ class ConfigMarkdown:
         Raises:
             FrontmatterError: If parsing fails
         """
-        template = await Filesystem.read_text(file_path)
+        template = await Filesystem.read(file_path)
 
         try:
             md = frontmatter.loads(template)

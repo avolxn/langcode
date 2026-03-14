@@ -28,10 +28,9 @@ class ConfigPaths:
             List of configuration file paths in order (root to leaf)
         """
         files: list[str] = []
-        for file in [f"{name}.jsonc", f"{name}.json"]:
-            found = await Filesystem.find_up(file, directory, worktree)
-            for resolved in reversed(found):
-                files.append(resolved)
+        found = await Filesystem.find_up(f"{name}.json", directory, worktree)
+        for resolved in reversed(found):
+            files.append(resolved)
         return files
 
     @staticmethod
@@ -76,13 +75,10 @@ class ConfigPaths:
             name: Base name of config file
 
         Returns:
-            List of potential file paths (jsonc and json variants)
+            List of potential file paths
         """
         base = Path(dir_path)
-        return [
-            str(base / f"{name}.jsonc"),
-            str(base / f"{name}.json"),
-        ]
+        return [str(base / f"{name}.json")]
 
     @staticmethod
     async def read_file(filepath: str) -> str | None:
@@ -98,7 +94,7 @@ class ConfigPaths:
             JsonError: For read errors other than file not found
         """
         try:
-            return await Filesystem.read_text(filepath)
+            return await Filesystem.read(filepath)
         except FileNotFoundError:
             return None
         except Exception as err:
@@ -151,14 +147,6 @@ class ConfigPaths:
             index = match.start()
             out += text[cursor:index]
 
-            # Check if this is in a comment
-            line_start = text.rfind("\n", 0, index - 1) + 1
-            prefix = text[line_start:index].lstrip()
-            if prefix.startswith("//"):
-                out += token
-                cursor = index + len(token)
-                continue
-
             # Extract file path
             file_path = token.replace("{file:", "").replace("}", "")
             if file_path.startswith("~/"):
@@ -167,7 +155,7 @@ class ConfigPaths:
             resolved_path = file_path if Path(file_path).is_absolute() else str(Path(config_dir) / file_path)
 
             try:
-                file_content = (await Filesystem.read_text(resolved_path)).strip()
+                file_content = (await Filesystem.read(resolved_path)).strip()
             except FileNotFoundError as error:
                 if missing == "empty":
                     file_content = ""
@@ -195,10 +183,10 @@ class ConfigPaths:
         input_source: str | dict[str, str],
         missing: Literal["error", "empty"] = "error",
     ) -> Any:
-        """Substitute and parse JSONC text.
+        """Substitute and parse JSON text.
 
         Args:
-            text: JSONC text to parse
+            text: JSON text to parse
             input_source: Either a file path string or dict with 'source' and 'dir' keys
             missing: How to handle missing file references
 
@@ -212,16 +200,12 @@ class ConfigPaths:
         text = await ConfigPaths.substitute(text, input_source, missing)
 
         try:
-            # Python's json module doesn't support comments, so we need to strip them
-            # For now, use a simple approach - in production, consider using a JSONC library
-            import json5  # type: ignore
-
-            data = json5.loads(text)
+            data = json.loads(text)
             return data
         except Exception as e:
             raise JsonError(
                 path=config_source,
-                message=f"\n--- JSONC Input ---\n{text}\n--- Errors ---\n{str(e)}\n--- End ---",
+                message=f"\n--- JSON Input ---\n{text}\n--- Errors ---\n{str(e)}\n--- End ---",
             ) from e
 
 

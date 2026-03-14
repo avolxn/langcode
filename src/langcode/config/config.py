@@ -469,7 +469,7 @@ class Config:
 
         # Load from various global config files
         config_dir = Global.Path.config
-        for filename in ["config.json", "opencode.json", "opencode.jsonc"]:
+        for filename in ["config.json", "opencode.json"]:
             filepath = str(Path(config_dir) / filename)
             config = await cls._load_file(filepath)
             result = merge_deep(result, config)
@@ -518,9 +518,8 @@ class Config:
         # 5. Managed config (highest priority)
         managed_dir = cls.managed_config_dir()
         if await anyio.Path(managed_dir).exists():
-            for filename in ["opencode.jsonc", "opencode.json"]:
-                filepath = str(Path(managed_dir) / filename)
-                result = cls._merge_config_concat_arrays(result, await cls._load_file(filepath))
+            filepath = str(Path(managed_dir) / "opencode.json")
+            result = cls._merge_config_concat_arrays(result, await cls._load_file(filepath))
 
         # Migrate deprecated mode field to agent field
         for name, mode_config in (result.get("mode") or {}).items():

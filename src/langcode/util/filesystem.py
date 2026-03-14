@@ -1,10 +1,8 @@
 """Filesystem utilities."""
 
 import json
-from pathlib import Path
 from typing import Any, TypeVar
 
-import aiofiles
 import anyio
 
 T = TypeVar("T")
@@ -26,9 +24,8 @@ class Filesystem:
         Returns:
             Parsed JSON data
         """
-        async with aiofiles.open(path) as f:
-            content = await f.read()
-            return json.loads(content)
+        content = await anyio.Path(path).read_text()
+        return json.loads(content)
 
     @staticmethod
     async def write_json(path: str, data: Any):
@@ -38,9 +35,8 @@ class Filesystem:
             path: Path to the JSON file
             data: Data to serialize as JSON
         """
-        Path(path).parent.mkdir(parents=True, exist_ok=True)
-        async with aiofiles.open(path, "w") as f:
-            await f.write(json.dumps(data, indent=2))
+        await anyio.Path(path).parent.mkdir(parents=True, exist_ok=True)
+        await anyio.Path(path).write_text(json.dumps(data, indent=2))
 
     @staticmethod
     async def write(path: str, content: str):
@@ -50,9 +46,8 @@ class Filesystem:
             path: Path to the text file
             content: Text content to write
         """
-        Path(path).parent.mkdir(parents=True, exist_ok=True)
-        async with aiofiles.open(path, "w") as f:
-            await f.write(content)
+        await anyio.Path(path).parent.mkdir(parents=True, exist_ok=True)
+        await anyio.Path(path).write_text(content)
 
     @staticmethod
     async def read(path: str) -> str:
@@ -64,8 +59,7 @@ class Filesystem:
         Returns:
             File contents as string
         """
-        async with aiofiles.open(path) as f:
-            return await f.read()
+        return await anyio.Path(path).read_text()
 
     @staticmethod
     async def is_dir(path: str) -> bool:
@@ -78,18 +72,6 @@ class Filesystem:
             True if path is a directory, False otherwise
         """
         return await anyio.Path(path).is_dir()
-
-    @staticmethod
-    async def read_text(path: str) -> str:
-        """Read text file (alias for read).
-
-        Args:
-            path: Path to the text file
-
-        Returns:
-            File contents as string
-        """
-        return await Filesystem.read(path)
 
     @staticmethod
     async def exists(path: str) -> bool:
@@ -120,8 +102,8 @@ class Filesystem:
             List of found file paths
         """
         found: list[str] = []
-        current = Path(start).resolve()
-        stop_path = Path(stop).resolve()
+        current = anyio.Path(start).resolve()
+        stop_path = anyio.Path(stop).resolve()
 
         while True:
             candidate = current / filename
@@ -155,8 +137,8 @@ class Filesystem:
         Yields:
             Paths to found directories
         """
-        current = Path(start).resolve()
-        stop_path = Path(stop).resolve()
+        current = anyio.Path(start).resolve()
+        stop_path = anyio.Path(stop).resolve()
 
         while True:
             for target in targets:
