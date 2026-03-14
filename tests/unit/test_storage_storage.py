@@ -20,7 +20,7 @@ def temp_storage_dir(tmp_path):
 @pytest.fixture
 def mock_global_path(tmp_path):
     """Mock Global.Path.data."""
-    with patch("langcode.global_config.Global") as mock_global:
+    with patch("langcode.config.globals.Global") as mock_global:
         mock_global.Path.data = str(tmp_path)
         yield mock_global
 

@@ -50,7 +50,7 @@ class Storage:
         if Storage._state is not None:
             return Storage._state
 
-        from langcode.global_config import Global
+        from langcode.config.globals import Global
 
         dir = str(Path(Global.Path.data) / "storage")
         Storage._state = {"dir": dir}

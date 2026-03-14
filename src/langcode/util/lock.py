@@ -35,7 +35,7 @@ class Lock:
         Returns:
             Path to the lock file in the locks directory
         """
-        from langcode.global_config import Global
+        from langcode.config.globals import Global
 
         # Create a hash of the path to use as lock filename
         path_hash = hashlib.md5(path.encode(), usedforsecurity=False).hexdigest()  # noqa: S324
