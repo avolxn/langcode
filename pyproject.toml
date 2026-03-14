@@ -85,7 +85,7 @@ target-version = "py311"
 src = ["src"]
 
 [tool.ruff.lint]
-select = ["E", "F", "B", "I", "UP", "S", "N", "PTH", "ASYNC", "C4"]
+select = ["E", "F", "B", "I", "UP", "S", "N", "ASYNC", "C4"]
 ignore = ["E501"]
 
 [tool.pytest.ini_options]
