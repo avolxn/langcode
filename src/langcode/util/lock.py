@@ -7,7 +7,17 @@ from pathlib import Path
 
 
 class Lock:
-    """File lock context manager."""
+    """File lock context manager.
+
+    Provides file-based locking using fcntl. Lock files are stored separately
+    from data files to avoid interference.
+
+    Attributes:
+        path: Path to the file being locked
+        exclusive: Whether this is an exclusive (write) lock
+        fd: File descriptor for the lock file
+        lock_file: Path to the actual lock file
+    """
 
     def __init__(self, path: str, exclusive: bool = False):
         self.path = path
@@ -17,10 +27,19 @@ class Lock:
         self.lock_file = self._get_lock_file(path)
 
     def _get_lock_file(self, path: str) -> str:
-        """Get lock file path in a separate directory."""
+        """Get lock file path in a separate directory.
+
+        Args:
+            path: Path to the file being locked
+
+        Returns:
+            Path to the lock file in the locks directory
+        """
+        from langcode.global_config import Global
+
         # Create a hash of the path to use as lock filename
         path_hash = hashlib.md5(path.encode(), usedforsecurity=False).hexdigest()  # noqa: S324
-        lock_dir = Path.home() / ".langcode" / "locks"
+        lock_dir = Path(Global.Path.data) / "locks"
         lock_dir.mkdir(parents=True, exist_ok=True)
         return str(lock_dir / f"{path_hash}.lock")
 
@@ -47,10 +66,24 @@ class Lock:
 
     @staticmethod
     def read(path: str) -> "Lock":
-        """Create a read lock."""
+        """Create a read lock.
+
+        Args:
+            path: Path to the file to lock
+
+        Returns:
+            Lock instance configured for shared (read) access
+        """
         return Lock(path, exclusive=False)
 
     @staticmethod
     def write(path: str) -> "Lock":
-        """Create a write lock."""
+        """Create a write lock.
+
+        Args:
+            path: Path to the file to lock
+
+        Returns:
+            Lock instance configured for exclusive (write) access
+        """
         return Lock(path, exclusive=True)

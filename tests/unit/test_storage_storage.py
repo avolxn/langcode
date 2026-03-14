@@ -151,26 +151,18 @@ class TestStorageMigrations:
     """Tests for storage migrations."""
 
     @pytest.mark.asyncio
-    async def test_migration_runs_once(self, mock_global_path, tmp_path):
-        """Test that migrations only run once."""
+    async def test_storage_initialization(self, mock_global_path, tmp_path):
+        """Test that storage initializes correctly."""
         Storage._state = None
 
         storage_dir = tmp_path / "storage"
         storage_dir.mkdir()
 
-        # First call should run migrations
+        # First call should initialize state
         state1 = await Storage._get_state()
+        assert state1 is not None
+        assert "dir" in state1
 
-        # Check migration file was created
-        migration_file = storage_dir / "migration"
-        assert migration_file.exists()
-        version = int(migration_file.read_text())
-        assert version == 2  # We have 2 migrations
-
-        # Second call should not run migrations again
-        Storage._state = None
+        # Second call should reuse cached state
         state2 = await Storage._get_state()
-
-        # Version should still be 2
-        version = int(migration_file.read_text())
-        assert version == 2
+        assert state2 is state1  # Same object

@@ -7,7 +7,15 @@ T = TypeVar("T")
 
 
 class Lazy(Generic[T]):
-    """Lazy initialization wrapper."""
+    """Lazy initialization wrapper.
+
+    Defers initialization until first access and caches the result.
+
+    Attributes:
+        _initializer: Function to call for initialization
+        _value: Cached initialized value
+        _initialized: Whether initialization has occurred
+    """
 
     def __init__(self, initializer: Callable[[], T]):
         self._initializer = initializer
@@ -15,7 +23,11 @@ class Lazy(Generic[T]):
         self._initialized = False
 
     def __call__(self) -> T:
-        """Get or initialize the value."""
+        """Get or initialize the value.
+
+        Returns:
+            The initialized value
+        """
         if not self._initialized:
             self._value = self._initializer()
             self._initialized = True
@@ -28,7 +40,14 @@ class Lazy(Generic[T]):
 
 
 def lazy(func: Callable[[], Awaitable[T]]) -> Callable[[], Coroutine[Any, Any, T]]:
-    """Decorator for lazy initialization of async functions."""
+    """Decorator for lazy initialization of async functions.
+
+    Args:
+        func: Async function to wrap with lazy initialization
+
+    Returns:
+        Wrapped function that caches the result
+    """
     _value: T | None = None
     _initialized = False
 

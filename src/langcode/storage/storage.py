@@ -1,9 +1,7 @@
-"""Legacy JSON file storage with migrations."""
+"""JSON file storage with migrations."""
 
-import json
 import os
 from collections.abc import Awaitable, Callable
-from pathlib import Path
 from typing import TypeVar
 
 from langcode.util.filesystem import Filesystem
@@ -17,7 +15,11 @@ log = Log.create(service="storage")
 
 
 class NotFoundError(Exception):
-    """Resource not found in storage."""
+    """Resource not found in storage.
+
+    Attributes:
+        message: Error message describing what was not found
+    """
 
     def __init__(self, message: str):
         self.message = message
@@ -25,152 +27,25 @@ class NotFoundError(Exception):
 
 
 class Storage:
-    """Legacy JSON file storage system."""
+    """JSON file storage system.
+
+    Provides JSON-based storage with migrations for backward compatibility.
+    All data is stored as editable JSON files in ~/.langcode/storage/
+
+    Attributes:
+        _state: Cached storage state containing directory path
+    """
 
     _state = None
 
     @staticmethod
     async def _run_migrations(dir: str):
-        """Run storage migrations."""
-        from langcode.util.git import git
+        """Run storage migrations.
 
-        # Migration 0: Migrate old project structure
-        async def migration_0(dir: str):
-            project_dir = Path(dir).parent / "project"
-            if not await Filesystem.is_dir(str(project_dir)):
-                return
-
-            project_dirs = await Glob.scan("*", cwd=str(project_dir), include="all")
-
-            for project_name in project_dirs:
-                full_path = project_dir / project_name
-                if not await Filesystem.is_dir(str(full_path)):
-                    continue
-
-                log.info(f"migrating project {project_name}")
-                project_id = project_name
-                worktree = "/"
-
-                if project_id != "global":
-                    # Find worktree from message files
-                    msg_files = await Glob.scan(
-                        "storage/session/message/*/*.json",
-                        cwd=str(full_path),
-                        absolute=True,
-                    )
-
-                    for msg_file in msg_files:
-                        json_data = await Filesystem.read_json(msg_file)
-                        worktree = json_data.get("path", {}).get("root")
-                        if worktree:
-                            break
-
-                    if not worktree:
-                        continue
-                    if not await Filesystem.is_dir(worktree):
-                        continue
-
-                    # Get git root commit as project ID
-                    result = await git(["rev-list", "--max-parents=0", "--all"], cwd=worktree)
-                    commits = [line.strip() for line in result.text().split("\n") if line.strip()]
-                    commits.sort()
-                    if not commits:
-                        continue
-
-                    project_id = commits[0]
-
-                    # Write project metadata
-                    import time
-
-                    now = int(time.time() * 1000)
-                    await Filesystem.write_json(
-                        os.path.join(dir, "project", f"{project_id}.json"),
-                        {
-                            "id": project_id,
-                            "vcs": "git",
-                            "worktree": worktree,
-                            "time": {
-                                "created": now,
-                                "initialized": now,
-                            },
-                        },
-                    )
-
-                    log.info(f"migrating sessions for project {project_id}")
-
-                    # Migrate sessions
-                    session_files = await Glob.scan(
-                        "storage/session/info/*.json",
-                        cwd=str(full_path),
-                        absolute=True,
-                    )
-
-                    for session_file in session_files:
-                        dest = os.path.join(dir, "session", project_id, Path(session_file).name)
-                        log.info("copying", session_file=session_file, dest=dest)
-                        session = await Filesystem.read_json(session_file)
-                        await Filesystem.write_json(dest, session)
-
-                        log.info(f"migrating messages for session {session['id']}")
-
-                        # Migrate messages
-                        msg_files = await Glob.scan(
-                            f"storage/session/message/{session['id']}/*.json",
-                            cwd=str(full_path),
-                            absolute=True,
-                        )
-
-                        for msg_file in msg_files:
-                            dest = os.path.join(dir, "message", session["id"], Path(msg_file).name)
-                            log.info("copying", msg_file=msg_file, dest=dest)
-                            message = await Filesystem.read_json(msg_file)
-                            await Filesystem.write_json(dest, message)
-
-                            log.info(f"migrating parts for message {message['id']}")
-
-                            # Migrate parts
-                            part_files = await Glob.scan(
-                                f"storage/session/part/{session['id']}/{message['id']}/*.json",
-                                cwd=str(full_path),
-                                absolute=True,
-                            )
-
-                            for part_file in part_files:
-                                dest = os.path.join(dir, "part", message["id"], Path(part_file).name)
-                                part = await Filesystem.read_json(part_file)
-                                log.info("copying", part_file=part_file, dest=dest)
-                                await Filesystem.write_json(dest, part)
-
-        # Migration 1: Extract diffs from session summaries
-        async def migration_1(dir: str):
-            session_files = await Glob.scan("session/*/*.json", cwd=dir, absolute=True)
-
-            for item in session_files:
-                session = await Filesystem.read_json(item)
-                if not session.get("projectID"):
-                    continue
-                if not session.get("summary", {}).get("diffs"):
-                    continue
-
-                diffs = session["summary"]["diffs"]
-                await Filesystem.write(
-                    os.path.join(dir, "session_diff", f"{session['id']}.json"),
-                    json.dumps(diffs),
-                )
-
-                # Update session with aggregated summary
-                additions = sum(d.get("additions", 0) for d in diffs)
-                deletions = sum(d.get("deletions", 0) for d in diffs)
-
-                await Filesystem.write_json(
-                    os.path.join(dir, "session", session["projectID"], f"{session['id']}.json"),
-                    {
-                        **session,
-                        "summary": {"additions": additions, "deletions": deletions},
-                    },
-                )
-
-        migrations = [migration_0, migration_1]
+        Args:
+            dir: Storage directory path where migrations will be applied
+        """
+        migrations: list = []
 
         # Read current migration version
         migration_file = os.path.join(dir, "migration")
@@ -190,7 +65,11 @@ class Storage:
 
     @staticmethod
     async def _get_state():
-        """Initialize storage state."""
+        """Initialize storage state.
+
+        Returns:
+            Dictionary containing storage directory path
+        """
         if Storage._state is not None:
             return Storage._state
 
@@ -203,7 +82,11 @@ class Storage:
 
     @staticmethod
     async def remove(key: list[str]):
-        """Remove a storage entry."""
+        """Remove a storage entry.
+
+        Args:
+            key: Path components to the storage entry (e.g., ["project", "id"])
+        """
         state = await Storage._get_state()
         dir = state["dir"]
         target = os.path.join(dir, *key) + ".json"
@@ -218,7 +101,17 @@ class Storage:
 
     @staticmethod
     async def read(key: list[str]) -> T:
-        """Read a storage entry."""
+        """Read a storage entry.
+
+        Args:
+            key: Path components to the storage entry
+
+        Returns:
+            Parsed JSON data from the storage file
+
+        Raises:
+            NotFoundError: If the storage entry does not exist
+        """
         state = await Storage._get_state()
         dir = state["dir"]
         target = os.path.join(dir, *key) + ".json"
@@ -232,7 +125,18 @@ class Storage:
 
     @staticmethod
     async def update(key: list[str], fn: Callable[[T], None]) -> T:
-        """Update a storage entry."""
+        """Update a storage entry.
+
+        Args:
+            key: Path components to the storage entry
+            fn: Function that modifies the data in-place
+
+        Returns:
+            Updated data after applying the function
+
+        Raises:
+            NotFoundError: If the storage entry does not exist
+        """
         state = await Storage._get_state()
         dir = state["dir"]
         target = os.path.join(dir, *key) + ".json"
@@ -248,7 +152,12 @@ class Storage:
 
     @staticmethod
     async def write(key: list[str], content: T):
-        """Write a storage entry."""
+        """Write a storage entry.
+
+        Args:
+            key: Path components to the storage entry
+            content: Data to write (will be JSON serialized)
+        """
         state = await Storage._get_state()
         dir = state["dir"]
         target = os.path.join(dir, *key) + ".json"
@@ -261,7 +170,17 @@ class Storage:
 
     @staticmethod
     async def _with_error_handling(body: Callable[[], Awaitable[T]]) -> T:
-        """Execute with error handling."""
+        """Execute with error handling.
+
+        Args:
+            body: Async function to execute
+
+        Returns:
+            Result from the body function
+
+        Raises:
+            NotFoundError: If a FileNotFoundError occurs
+        """
         try:
             return await body()
         except FileNotFoundError as e:
@@ -271,7 +190,14 @@ class Storage:
 
     @staticmethod
     async def list(prefix: list[str]) -> list[list[str]]:
-        """List storage entries with given prefix."""
+        """List storage entries with given prefix.
+
+        Args:
+            prefix: Path prefix to filter entries
+
+        Returns:
+            List of key paths matching the prefix
+        """
         state = await Storage._get_state()
         dir = state["dir"]
 
