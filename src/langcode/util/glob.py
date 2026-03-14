@@ -1,9 +1,8 @@
 """Glob pattern matching utilities."""
 
-import glob as stdlib_glob
-import os
-from pathlib import Path
 from typing import Literal
+
+import anyio
 
 
 class Glob:
@@ -31,32 +30,19 @@ class Glob:
         Returns:
             List of matching file paths
         """
-        # Use pathlib to avoid changing global cwd
-        matches: list[str]
-        if cwd:
-            base_path = Path(cwd)
-            path_matches = list(base_path.glob(pattern))  # noqa: ASYNC240
-            # Convert Path objects to strings
-            matches = [str(m.relative_to(base_path)) for m in path_matches]
-        else:
-            matches = stdlib_glob.glob(pattern, recursive=True)
 
-        # Filter by type
+        base_path = anyio.Path(cwd) if cwd else anyio.Path()
+
+        paths = [p async for p in base_path.glob(pattern)]
+
         if include == "file":
-            if cwd:
-                matches = [m for m in matches if (Path(cwd) / m).is_file()]
-            else:
-                matches = [m for m in matches if os.path.isfile(m)]  # noqa: ASYNC240
+            paths = [p for p in paths if await p.is_file()]
         elif include == "dir":
-            if cwd:
-                matches = [m for m in matches if (Path(cwd) / m).is_dir()]
-            else:
-                matches = [m for m in matches if os.path.isdir(m)]  # noqa: ASYNC240
+            paths = [p for p in paths if await p.is_dir()]
 
-        # Convert to absolute paths if requested
-        if absolute and cwd:
-            matches = [str(Path(cwd) / m) for m in matches]
-        elif absolute:
-            matches = [os.path.abspath(m) for m in matches]  # noqa: ASYNC240
+        if absolute:
+            paths = [str(p) for p in paths]
+        else:
+            paths = [str(p.relative_to(base_path)) for p in paths]
 
-        return matches
+        return paths
