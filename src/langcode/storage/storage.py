@@ -1,4 +1,4 @@
-"""JSON file storage with migrations."""
+"""JSON file storage."""
 
 import os
 from collections.abc import Awaitable, Callable
@@ -29,7 +29,7 @@ class NotFoundError(Exception):
 class Storage:
     """JSON file storage system.
 
-    Provides JSON-based storage with migrations for backward compatibility.
+    Provides JSON-based storage for all data.
     All data is stored as editable JSON files in ~/.langcode/storage/
 
     Attributes:
@@ -37,31 +37,6 @@ class Storage:
     """
 
     _state = None
-
-    @staticmethod
-    async def _run_migrations(dir: str):
-        """Run storage migrations.
-
-        Args:
-            dir: Storage directory path where migrations will be applied
-        """
-        migrations: list = []
-
-        # Read current migration version
-        migration_file = os.path.join(dir, "migration")
-        try:
-            migration_version = int(await Filesystem.read_json(migration_file))
-        except Exception:
-            migration_version = 0
-
-        # Run pending migrations
-        for index in range(migration_version, len(migrations)):
-            log.info("running migration", index=index)
-            try:
-                await migrations[index](dir)
-                await Filesystem.write(migration_file, str(index + 1))
-            except Exception as e:
-                log.error("failed to run migration", index=index, error=str(e))
 
     @staticmethod
     async def _get_state():
@@ -76,7 +51,6 @@ class Storage:
         from langcode.global_config import Global
 
         dir = os.path.join(Global.Path.data, "storage")
-        await Storage._run_migrations(dir)
         Storage._state = {"dir": dir}
         return Storage._state
 
