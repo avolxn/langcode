@@ -1,6 +1,5 @@
 """Global configuration paths and settings."""
 
-import os
 from pathlib import Path
 
 
@@ -11,7 +10,7 @@ class Global:
         """Global paths."""
 
         # Data directory for storage
-        data: str = os.path.expanduser("~/.langcode")
+        data: str = str(Path("~/.langcode").expanduser())
 
         @classmethod
         def ensure_dirs(cls):

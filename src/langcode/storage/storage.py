@@ -1,8 +1,10 @@
 """JSON file storage."""
 
-import os
 from collections.abc import Awaitable, Callable
+from pathlib import Path
 from typing import TypeVar
+
+import anyio
 
 from langcode.util.filesystem import Filesystem
 from langcode.util.glob import Glob
@@ -50,7 +52,7 @@ class Storage:
 
         from langcode.global_config import Global
 
-        dir = os.path.join(Global.Path.data, "storage")
+        dir = str(Path(Global.Path.data) / "storage")
         Storage._state = {"dir": dir}
         return Storage._state
 
@@ -63,11 +65,11 @@ class Storage:
         """
         state = await Storage._get_state()
         dir = state["dir"]
-        target = os.path.join(dir, *key) + ".json"
+        target = str(Path(dir).joinpath(*key)) + ".json"
 
         async def _remove():
             try:
-                os.unlink(target)
+                await anyio.Path(target).unlink()
             except FileNotFoundError:
                 pass
 
@@ -88,7 +90,7 @@ class Storage:
         """
         state = await Storage._get_state()
         dir = state["dir"]
-        target = os.path.join(dir, *key) + ".json"
+        target = str(Path(dir).joinpath(*key)) + ".json"
 
         async def _read():
             async with Lock.read(target):
@@ -113,7 +115,7 @@ class Storage:
         """
         state = await Storage._get_state()
         dir = state["dir"]
-        target = os.path.join(dir, *key) + ".json"
+        target = str(Path(dir).joinpath(*key)) + ".json"
 
         async def _update():
             async with Lock.write(target):
@@ -134,7 +136,7 @@ class Storage:
         """
         state = await Storage._get_state()
         dir = state["dir"]
-        target = os.path.join(dir, *key) + ".json"
+        target = str(Path(dir).joinpath(*key)) + ".json"
 
         async def _write():
             async with Lock.write(target):
@@ -176,11 +178,11 @@ class Storage:
         dir = state["dir"]
 
         try:
-            results = await Glob.scan("**/*", cwd=os.path.join(dir, *prefix), include="file")
+            results = await Glob.scan("**/*", cwd=str(Path(dir).joinpath(*prefix)), include="file")
             # Convert paths to key lists, removing .json extension
             keys = []
             for result in results:
-                parts = result[:-5].split(os.sep)  # Remove .json
+                parts = list(Path(result).with_suffix("").parts)
                 keys.append([*prefix, *parts])
             keys.sort()
             return keys
