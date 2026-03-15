@@ -8,7 +8,7 @@ from typing import Any, Literal
 
 from langcode.config.flag import Flag
 from langcode.config.globals import Global
-from langcode.util.error import NamedError
+from langcode.util.error import InvalidError, JsonError
 from langcode.util.filesystem import Filesystem
 
 
@@ -207,27 +207,3 @@ class ConfigPaths:
                 path=config_source,
                 message=f"\n--- JSON Input ---\n{text}\n--- Errors ---\n{str(e)}\n--- End ---",
             ) from e
-
-
-class JsonError(NamedError):
-    """Error parsing JSON configuration file."""
-
-    def __init__(self, path: str, message: str | None = None):
-        super().__init__(
-            name="ConfigJsonError",
-            data={"path": path, "message": message},
-        )
-
-
-class InvalidError(NamedError):
-    """Invalid configuration error."""
-
-    def __init__(self, path: str, message: str | None = None, issues: Any = None):
-        super().__init__(
-            name="ConfigInvalidError",
-            data={"path": path, "message": message, "issues": issues},
-        )
-
-
-ConfigPaths.JsonError = JsonError
-ConfigPaths.InvalidError = InvalidError

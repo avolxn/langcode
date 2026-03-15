@@ -3,9 +3,9 @@
 import re
 from typing import Any
 
-import frontmatter
+import frontmatter  # type: ignore[import-untyped]
 
-from langcode.util.error import NamedError
+from langcode.util.error import FrontmatterError
 from langcode.util.filesystem import Filesystem
 
 
@@ -122,16 +122,3 @@ class ConfigMarkdown:
                     path=file_path,
                     message=f"{file_path}: Failed to parse YAML frontmatter: {err}",
                 ) from err
-
-
-class FrontmatterError(NamedError):
-    """Error parsing frontmatter in configuration file."""
-
-    def __init__(self, path: str, message: str):
-        super().__init__(
-            name="ConfigFrontmatterError",
-            data={"path": path, "message": message},
-        )
-
-
-ConfigMarkdown.FrontmatterError = FrontmatterError

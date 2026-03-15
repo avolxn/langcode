@@ -28,3 +28,43 @@ class NamedError(Exception):
             "name": self.name,
             "data": self.data,
         }
+
+
+class NotFoundError(NamedError):
+    """Resource not found in storage."""
+
+    def __init__(self, message: str):
+        super().__init__(
+            name="StorageNotFoundError",
+            data={"message": message},
+        )
+
+
+class FrontmatterError(NamedError):
+    """Error parsing frontmatter in configuration file."""
+
+    def __init__(self, path: str, message: str):
+        super().__init__(
+            name="ConfigFrontmatterError",
+            data={"path": path, "message": message},
+        )
+
+
+class JsonError(NamedError):
+    """Error parsing JSON configuration file."""
+
+    def __init__(self, path: str, message: str | None = None):
+        super().__init__(
+            name="ConfigJsonError",
+            data={"path": path, "message": message},
+        )
+
+
+class InvalidError(NamedError):
+    """Invalid configuration error."""
+
+    def __init__(self, path: str, message: str | None = None, issues: Any = None):
+        super().__init__(
+            name="ConfigInvalidError",
+            data={"path": path, "message": message, "issues": issues},
+        )

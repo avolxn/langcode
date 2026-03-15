@@ -12,6 +12,7 @@ from pydantic import BaseModel, Field
 from langcode.config.flag import Flag
 from langcode.config.globals import Global
 from langcode.config.paths import ConfigPaths
+from langcode.util.error import InvalidError
 from langcode.util.filesystem import Filesystem
 from langcode.util.log import Log
 from langcode.util.merge import merge_deep
@@ -453,7 +454,7 @@ class Config:
 
             return result
         except Exception as error:
-            raise ConfigPaths.InvalidError(
+            raise InvalidError(
                 path=filepath,
                 message=str(error),
             ) from error
