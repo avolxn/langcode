@@ -1,12 +1,10 @@
 """Unit tests for storage.storage module."""
 
-import os
-import json
-import pytest
-from pathlib import Path
-from unittest.mock import patch, AsyncMock, MagicMock
+from unittest.mock import patch
 
-from langcode.storage.storage import Storage, NotFoundError
+import pytest
+
+from langcode.storage.storage import NotFoundError, Storage
 
 
 @pytest.fixture

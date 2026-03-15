@@ -41,8 +41,8 @@ class Glob:
             paths = [p for p in paths if await p.is_dir()]
 
         if absolute:
-            paths = [str(p) for p in paths]
+            matches = [str(p) for p in paths]
         else:
-            paths = [str(p.relative_to(base_path)) for p in paths]
+            matches = [str(p.relative_to(base_path)) for p in paths]
 
-        return paths
+        return matches

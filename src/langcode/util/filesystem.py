@@ -28,15 +28,19 @@ class Filesystem:
         return json.loads(content)
 
     @staticmethod
-    async def write_json(path: str, data: Any):
+    async def write_json(path: str, data: Any, mode: int | None = None):
         """Write JSON file.
 
         Args:
             path: Path to the JSON file
             data: Data to serialize as JSON
+            mode: Optional file permissions (e.g., 0o600)
         """
         await anyio.Path(path).parent.mkdir(parents=True, exist_ok=True)
-        await anyio.Path(path).write_text(json.dumps(data, indent=2))
+        content = json.dumps(data, indent=2)
+        await anyio.Path(path).write_text(content)
+        if mode is not None:
+            await anyio.Path(path).chmod(mode)
 
     @staticmethod
     async def write(path: str, content: str):
@@ -102,8 +106,8 @@ class Filesystem:
             List of found file paths
         """
         found: list[str] = []
-        current = anyio.Path(start).resolve()
-        stop_path = anyio.Path(stop).resolve()
+        current = await anyio.Path(start).resolve()
+        stop_path = await anyio.Path(stop).resolve()
 
         while True:
             candidate = current / filename
@@ -137,8 +141,8 @@ class Filesystem:
         Yields:
             Paths to found directories
         """
-        current = anyio.Path(start).resolve()
-        stop_path = anyio.Path(stop).resolve()
+        current = await anyio.Path(start).resolve()
+        stop_path = await anyio.Path(stop).resolve()
 
         while True:
             for target in targets:

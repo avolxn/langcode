@@ -1,8 +1,6 @@
 """Unit tests for utility modules."""
 
-import os
 import pytest
-from pathlib import Path
 
 from langcode.util.lazy import Lazy, lazy
 from langcode.util.log import Log

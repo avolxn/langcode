@@ -2,7 +2,6 @@
 
 import os
 import tempfile
-from pathlib import Path
 
 import pytest
 
@@ -98,7 +97,7 @@ class TestConfigPaths:
                 f.write("referenced content")
 
             # Create config with file reference
-            text = 'Config with {file:ref.txt}'
+            text = "Config with {file:ref.txt}"
             result = await ConfigPaths.substitute(text, os.path.join(tmpdir, "config.json"))
             assert "referenced content" in result
 
@@ -117,6 +116,7 @@ class TestConfig:
     def test_managed_config_dir_darwin(self):
         """Test managed config directory on macOS."""
         import sys
+
         original_platform = sys.platform
         sys.platform = "darwin"
         try:
@@ -128,6 +128,7 @@ class TestConfig:
     def test_managed_config_dir_linux(self):
         """Test managed config directory on Linux."""
         import sys
+
         original_platform = sys.platform
         sys.platform = "linux"
         try:
